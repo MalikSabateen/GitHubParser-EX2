@@ -24,3 +24,7 @@ for item in stats.files:
         list.append(item.rsplit("/",1)[0])
 print("---Number of Directories Changed---")
 print(len(list))
+print("---Number of Lines Deleted (With Comments & Blank Lines)---")
+print(stats.total['deletions'])
+print("---Number of Lines Inserted (With Comments & Blank Lines)---")
+print(stats.total['insertions'])
