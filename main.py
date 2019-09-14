@@ -18,3 +18,9 @@ print(fix_commit.message)
 stats=fix_commit.stats
 print("---Number of Files Changed---")
 print(len(stats.files))
+list=[]
+for item in stats.files:
+    if(item.rsplit("/",1)[0]) not in list:
+        list.append(item.rsplit("/",1)[0])
+print("---Number of Directories Changed---")
+print(len(list))
