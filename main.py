@@ -1,5 +1,6 @@
 ## Imports
 import git
+import re
 from git import Repo
 from datetime import datetime
 
@@ -30,21 +31,41 @@ print("---Number of Lines Deleted (With Comments & Blank Lines)---")
 print("\t",stats.total['deletions'])
 print("---Number of Lines Inserted (With Comments & Blank Lines)---")
 print("\t",stats.total['insertions'])
-print("---Time between the Fixing Commit and the Previous Commit---")
-dateone=datetime.strptime(repo.git.log(fix_commit,n=1,format="%cd"),'%a %b %d %H:%M:%S %Y %z')
-datetwo=datetime.strptime(repo.git.log(fix_commit.parents[0],n=1,format="%cd"),'%a %b %d %H:%M:%S %Y %z')
-print("\t",dateone-datetwo)
+commit_changes=repo.git.show(fix_commit)
+comment_D=0;
+comment_A=0;
+for line in commit_changes.splitlines():
+    if line:
+        if (line[0] == '-'):
+            if (len(line) < 2 or re.match('^(\/\/)|^(\/\*)|^#|^\*',line[1:].strip())):
+                comment_D = comment_D + 1
+        elif (line[0] == '+'):
+            if (len(line) < 2 or re.match('^(\/\/)|^(\/\*)|^#|^\*',line[1:].strip())):
+                comment_A = comment_A + 1
+print("---Number of Lines Deleted (Without Comments & Blank Lines)---")
+print ("\t",stats.total['deletions']-comment_D)
+print("---Number of Lines Inserted (Without Comments & Blank Lines)---")
+print ("\t",stats.total['insertions']-comment_A)
+print("---Time between the Fixing Commit and the Previous Commit for each File---")
+for item in stats.files:
+    print("\t--"+item+"--")
+    dateone=datetime.strptime(repo.git.log(fix_commit,'--',item,n=1,format="%cd"),'%a %b %d %H:%M:%S %Y %z')
+    if (repo.git.log(item,n=1,skip=1,format="%cd")is not ""):
+        datetwo=datetime.strptime(repo.git.log(fix_commit,'--',item,n=1,skip=1,format="%cd"),'%a %b %d %H:%M:%S %Y %z')
+        print("\t\t",dateone-datetwo)
+    else:
+        print("\t\tThis file does not have any prior commits")
 print("---Number of Modifications for each File---")
 for item in stats.files:
     print("\t--"+item+"--")
-    list=repo.git.log(item,follow=True)
-    print("\t\t",len(list))
+    list=repo.git.log(fix_commit,'--',item,format="%cd").splitlines()
+    print("\t\t",(len(list)))
 print("---Developers which have made Modifications to a File---")
 for item in stats.files:
     print("\t--"+item+"--")
     list=[]
     listnum=[]
-    authors=repo.git.log(item,format="%an").split("\n")
+    authors=repo.git.log(fix_commit,"--",item,format="%an").split("\n")
     for author in authors:
         if (author.casefold() not in list):
             list.append(author.casefold())
